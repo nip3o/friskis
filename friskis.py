@@ -6,13 +6,11 @@ import locale
 import requests
 from pyquery import PyQuery
 
-USER = ''
-PASSWORD = ''
-
 
 class URLs:
     base = 'http://linkoping.friskissvettis.se/'
     login = base + 'default.aspx?action=login_user'
+    schedule = base + 'default.asp?page=183'
 
 
 class Shift(object):
@@ -93,28 +91,27 @@ def parse_date(row):
     return date
 
 
-def main():
-    locale.setlocale(locale.LC_ALL, 'sv_SE')
-    session = requests.Session()
+class FriskisClient():
+    def __init__(self):
+        locale.setlocale(locale.LC_ALL, 'sv_SE')
+        self.session = requests.Session()
 
-    shifts = []
-    response = session.post(URLs.login, data={'user': USER, 'pwd': PASSWORD})
+    def login(self, username, password):
+        self.session.post(URLs.login, data={'user': username, 'pwd': password})
 
-    e = PyQuery(response.text)
-    rows = e.find('table.main .main_right table').eq(2).find('tr')
+    def get_available_shifts(self):
+        response = self.session.get(URLs.schedule)
 
-    for row in rows.items():
-        if is_beginning_of_crap(row):
-            break
+        e = PyQuery(response.text)
+        rows = e.find('table.main .main_right table').eq(2).find('tr')
 
-        if is_date(row):
-            date = parse_date(row)
-        else:
-            shift = parse_shift(row, date)
-            print unicode(shift)
-            shifts.append(shift)
+        for row in rows.items():
+            # This check is needed since the HTML is slighly broken, which makes it impossible
+            # to select exactly the table that we want...
+            if is_beginning_of_crap(row):
+                break
 
-    import ipdb; ipdb.set_trace()
-
-if __name__ == '__main__':
-    main()
+            if is_date(row):
+                date = parse_date(row)
+            else:
+                yield parse_shift(row, date)
