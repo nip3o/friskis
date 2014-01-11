@@ -6,6 +6,9 @@ import locale
 import requests
 from pyquery import PyQuery
 
+# Title of the heading before table containing shedule, used to find the correct table
+SCHEDULE_TABLE_HEADING = 'Bokningsbara aktiviteter'
+
 
 class URLs:
     base = 'http://linkoping.friskissvettis.se/'
@@ -92,6 +95,7 @@ def parse_date(row):
 
 
 class FriskisClient():
+
     def __init__(self):
         locale.setlocale(locale.LC_ALL, 'sv_SE')
         self.session = requests.Session()
@@ -103,7 +107,7 @@ class FriskisClient():
         response = self.session.get(URLs.schedule)
 
         e = PyQuery(response.text)
-        rows = e.find('table.main .main_right table').eq(2).find('tr')
+        rows = e.find("h1:contains('%s')" % SCHEDULE_TABLE_HEADING).next().find('tr')
 
         for row in rows.items():
             # This check is needed since the HTML is slighly broken, which makes it impossible
