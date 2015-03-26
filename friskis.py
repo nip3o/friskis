@@ -90,7 +90,7 @@ def parse_date(row):
     date = datetime.datetime.strptime(' '.join(row.text().split()[2:]), '%d %B')
     today = datetime.date.today()
 
-    date.replace(year=today.year + (1 if date.month < today.month else 0))
+    date = date.replace(year=today.year + (1 if date.month < today.month else 0))
     return date
 
 
